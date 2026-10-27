@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {WeekCalendar} from '../components/week-calendar';
+import {initial,type Workspace} from '../lib/tennis';
+import {mondayKey,shiftWeek} from '../lib/weeks';
+const data:Workspace={...initial,clients:[{id:'one',name:'Morning Student',notes:'',sessions:[],weeks:{'2026-09-28':{sessions:[{day:0,planId:'rally',time:'07:00',endTime:'08:30',completed:true},{day:6,planId:'rally',time:'',status:'scheduled'}]},'2026-10-05':{sessions:[{day:0,planId:'rally',time:'09:00'}]}}},{id:'two',name:'Afternoon Student',notes:'',sessions:[],weeks:{'2026-09-28':{sessions:[{day:4,planId:'rally',time:'16:00',endTime:'18:00',court:'Court 1',drillIds:[101,102,103,1,2,3]}]}}}]};
+const html=renderToStaticMarkup(<WeekCalendar data={data} today="2026-10-01" select={()=>{}}/>);
+assert.equal((html.match(/class="timeline-day/g)||[]).length,7);
+assert(html.includes('Sep 28 – Oct 4, 2026'));assert(html.includes('7:00 AM'));assert(html.includes('4:00 PM'));assert(html.includes('Court 1'));assert(html.includes('Time to arrange'));assert(html.includes('✓ Completed'));assert(html.includes('is-today'));assert(!html.includes('Morning Student, 2026-10-05'));assert(html.includes('Previous week'));assert(html.includes('Next week'));
+assert.equal(shiftWeek('2026-09-28',1),'2026-10-05');assert.equal(mondayKey(new Date('2026-10-04T12:00:00')),'2026-09-28');
+console.log('Passed seven-day rendering, month boundary, saved-only sessions, times, statuses, no-time sessions, and week navigation dates.');

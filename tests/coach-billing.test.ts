@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {activeSubscription,ownerAccount} from '../lib/coach-billing';
+import {createSessionToken,verifySessionAccount} from '../lib/session';
+const sub=(status:string,price='price_rally')=>({status,items:{data:[{price:{id:price}}]}});
+for(const status of ['active','trialing'])assert.equal(activeSubscription(sub(status),'price_rally'),true);
+for(const status of ['incomplete','incomplete_expired','past_due','unpaid','canceled','paused'])assert.equal(activeSubscription(sub(status),'price_rally'),false);
+assert.equal(activeSubscription(sub('active','other_product'),'price_rally'),false);
+process.env.RALLY_AUTH_USER='test-owner';
+assert.equal(ownerAccount('password:test-owner'),true);
+assert.equal(ownerAccount('google:coach-a'),false);
+assert.equal(ownerAccount('password:someone-else'),false);
+const a=await createSessionToken('test-only-secret','google:coach-a',600);
+const b=await createSessionToken('test-only-secret','google:coach-b',600);
+assert.equal(await verifySessionAccount('test-only-secret',a),'google:coach-a');
+assert.equal(await verifySessionAccount('test-only-secret',b),'google:coach-b');
+assert.equal(await verifySessionAccount('wrong-secret',a),null);
+assert.equal(await verifySessionAccount('test-only-secret',a.replace(a.split('.')[0],b.split('.')[0])),null);
+console.log('Subscription status, product matching, owner exemption, and signed account isolation checks passed.');
